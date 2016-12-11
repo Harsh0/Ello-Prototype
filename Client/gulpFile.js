@@ -14,6 +14,8 @@ gulp.task('browserify',function(){
 gulp.task('copy',function(){
     gulp.src('src/*.html')
         .pipe(gulp.dest('../Server/dist'));
+    gulp.src('src/images/*.*')
+        .pipe(gulp.dest('../Server/dist/images'));
     gulp.src('src/css/*.*')
         .pipe(gulp.dest('../Server/dist/css'));
     gulp.src('src/js/vendors/*.*')

@@ -5,12 +5,11 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
-var passport = require('passport');
-var LocalStrategy = require('passport-local').Strategy;
-var connectflash = require('connect-flash');
 
-var index = require('./routes/index');
+//var index = require('./routes/index');
 var users = require('./routes/users');
+var tailor = require('./routes/tailor');
+var admin = require('./routes/admin');
 
 var app = express();
 
@@ -24,11 +23,7 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(require('express-session')({ secret: 'cricket', resave: true, saveUninitialized: true }));
-app.use(passport.initialize());
-app.use(passport.session());
-app.use(connectflash());
-app.use(express.static(path.join(__dirname, './dist')));
+app.use(express.static(path.join(__dirname, 'dist')));
 
 //database connectivity
 mongoose.connect("mongodb://127.0.0.1/ellotest");
@@ -38,9 +33,11 @@ db.once('open',function(){
  console.log("Connection to MongoDB successfully");
 });
 
-app.use('/', index);
-app.use('/users', users);
 
+//app.use('/', index);
+app.use('/user', users);
+app.use('/tailor',tailor);
+app.use('/admin',admin);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
