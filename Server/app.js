@@ -7,7 +7,7 @@ var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 
 //var index = require('./routes/index');
-var users = require('./routes/users');
+var users = require('./routes/users1');
 var tailor = require('./routes/tailor');
 var admin = require('./routes/admin');
 

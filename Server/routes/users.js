@@ -1,11 +1,11 @@
 var express = require('express');
 var router = express.Router();
 var passport = require('passport');
-var LocalStrategy = require('passport-local').Strategy;
+var LocalStrategy = require('passport-local').Strategy;/* local Strategy for authentication */
 var connectflash = require('connect-flash');
-var User = require('../models/User');
-var auth = require('../methods/auth');
-var validation = require('../methods/validation');
+var User = require('../models/User');/* User models require for database access */
+var auth = require('../methods/auth');/* encryption and decryption of password module */
+var validation = require('../methods/validation');/* validation module for validation of data */
 var errorMsg = 'Some error Occured!, Please try again';
 
 router.use(require('express-session')({ secret: 'cricket', resave: true, saveUninitialized: true }));
@@ -13,15 +13,17 @@ router.use(passport.initialize());
 router.use(passport.session());
 router.use(connectflash());
 
+/* User login route */
+/* req.body object contain {"username":"user email","password":"user password"} */
 router.post('/login',
   passport.authenticate('local', { failureFlash: 'Error',successFlash:'success' }),
   function(req, res) {
-    res.json({responseText:'Authorised'});
-    console.log("in Login");
+    res.send('Authorised');
+    //console.log("in Login");
 });
-
-router.get('/logout',function(req,res,next){
-  console.log("Session Deleted");
+/* User logout route */
+router.get('/logout',isLoggedIn,function(req,res,next){
+//  console.log("Session Deleted");
   req.logout();
   res.send("logged out");
 });
@@ -46,10 +48,7 @@ router.post('/signup', function(req, res, next) {
           else{
             /* save user data into database */
             user.save(function(err){
-              if(err) {
-                res.send(errorMsg);
-                console.log(err);
-              }
+              if(err) res.send(errorMsg);
               else res.send('Sign Up Successfull. Please Login to Continue');
             });
           }
@@ -62,13 +61,38 @@ router.post('/signup', function(req, res, next) {
   }
 });
 
+/* User change password route */
+router.post('/changepassword',isLoggedIn,function(req,res,next){
+  var old_pass = req.body.password;
+  var new_pass = req.body.newPassword;
+  if(old_pass&&new_pass){
+    User.findOne({email:req.user.email,password:auth.encryptBackEnd(auth.decryptFrontEnd(old_pass))},function(err,user){
+      if(err) res.send(errorMsg);
+      if(user){
+        User.update({email:req.user.email,password:auth.encryptBackEnd(auth.decryptFrontEnd(old_pass))},{$set:{password:auth.encryptBackEnd(auth.decryptFrontEnd(new_pass))}},function(err){
+          if(err) res.send(errorMsg);
+          else{
+            res.send('password updated');
+          }
+        });
+      }
+      else{
+        res.send('invalid password');
+      }
+    })
+  }
+  else{
+    res.send('field incompletion');
+  }
+});
+
 passport.use(new LocalStrategy(
   function(username, password, done) {
     var temp = User.findOne({ 'email': username }, function (err, user) {
       if (err) { return done(err); }
       if (!user) { return done(null, false); }
       if (user.password!==auth.encryptBackEnd(auth.decryptFrontEnd(password))) { return done(null, false);}
-     return done(null, user);
+      else return done(null, user);
     });
   }
 ));
@@ -83,4 +107,13 @@ passport.deserializeUser(function(id, done) {
   });
 });
 
+/* User authentication checking */
+function isLoggedIn(req,res,next){
+  if(req.isAuthenticated()){
+    return next();
+  }
+  else{
+    res.send("User Unauthenticated");
+  }
+}
 module.exports = router;
